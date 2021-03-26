@@ -55,4 +55,13 @@ public class ServerGUI extends Application implements EventHandler<ActionEvent>{
         // Switch on its name
         switch(btn.getText()) {}
     }//handle
+
+    //set the getter
+    public TextField getTfDirectory() {
+        return tfDirectory;
+    }//get tf directory
+
+    public TextArea getTaLog() {
+        return taLog;
+    }//get tf ta log
 }//class

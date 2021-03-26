@@ -78,4 +78,18 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 		// Switch on its name
 		switch(btn.getText()) {}
 	}//handle
+
+	//set the setter
+	public TextField getTfServer(){
+		return this.tfServer;
+	}//get tf server
+
+	public TextField getTfDirectory(){
+		return this.tfDirectory;
+	}//get tf directory
+
+	public TextArea getTaLog(){
+		return this.taLog;
+	}//get ta log
+
 }
