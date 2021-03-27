@@ -92,4 +92,4 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 		return this.taLog;
 	}//get ta log
 
-}
+}//class
