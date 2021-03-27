@@ -35,7 +35,7 @@ public class TFTP extends Thread implements TFTFConstants{
 			dos.writeShort(opcode);		//write the data code : 3
 			dos.writeShort(blockNum);	//write the block num
 
-			f = new File("Lincoln.txt");
+			f = new File("Lincoln.txt");		//use file here,
 			System.out.println(f.getCanonicalFile());
 			fis = new FileInputStream(f);
 			int ba = 0;

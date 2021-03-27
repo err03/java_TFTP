@@ -39,7 +39,7 @@ public class ServerBegin extends Thread implements TFTFConstants{
 			String content = "";
 			while(true) {
 				byte b = dis.readByte();
-				if (b == 0) break;				//break;
+				if (b == 0) break;				//break;  still exception, think should be no enough byte[512],need more
 				content += (char)b;
 				System.out.println((char)b);
 			}
