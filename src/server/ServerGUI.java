@@ -25,6 +25,8 @@ public class ServerGUI extends Application implements EventHandler<ActionEvent>{
     private FlowPane directoryPane = new FlowPane(8,8);
     private VBox root = new VBox(8);
 
+    //serverBegin
+    private ServerBegin sb;
     /*main*/
     public static void main(String[] args) {launch(args);}//main
 
@@ -44,6 +46,10 @@ public class ServerGUI extends Application implements EventHandler<ActionEvent>{
         directoryPane.getChildren().addAll(lbDirectory,tfDirectory,btnChangeDir,btnStart);
         root.getChildren().addAll(directoryPane,taLog);
 
+        //set button action
+        btnStart.setOnAction(this);
+        btnChangeDir.setOnAction(this);
+
         stage.setScene(scene);
         stage.show();
     }//start
@@ -53,7 +59,16 @@ public class ServerGUI extends Application implements EventHandler<ActionEvent>{
         Button btn = (Button)evt.getSource();
 
         // Switch on its name
-        switch(btn.getText()) {}
+        switch(btn.getText()) {
+            case "Start":
+                btnStart.setText("Stop");
+                sb = new ServerBegin(this);
+                sb.start();
+                break;
+            case "Stop":
+                btnStart.setText("Start");
+                break;
+        }
     }//handle
 
     //set the getter

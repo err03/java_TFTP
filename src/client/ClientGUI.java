@@ -9,6 +9,7 @@ import javafx.scene.layout.*;
 import javafx.stage.*;
 
 import style.*;		//import the custom style
+import tftp.TFTP;
 
 import javax.swing.text.html.parser.Parser;
 
@@ -67,6 +68,12 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 		//add all to root
 		root.getChildren().addAll(serverPane,directoryPane,buttonPane,taLog);
 
+		//set the button action
+		btnChangeDir.setOnAction(this);
+		btnConnect.setOnAction(this);
+		btnDownload.setOnAction(this);
+		btnUpload.setOnAction(this);
+
 		stage.setScene(scene);
 		stage.show();
 	}//start
@@ -76,7 +83,19 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 		Button btn = (Button)evt.getSource();
 
 		// Switch on its name
-		switch(btn.getText()) {}
+		switch(btn.getText()) {
+			case "Download":
+				break;
+			case "Upload":
+				break;
+			case "Change Dir":
+				break;
+			case "Connect":
+				TFTP tftp = new ClientConnect(this);
+				tftp.start();
+				System.out.println("click coonnects");
+				break;
+		}
 	}//handle
 
 	//set the setter
