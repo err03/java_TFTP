@@ -4,14 +4,11 @@ import javafx.event.*;
 import javafx.geometry.Pos;
 import javafx.scene.*;
 import javafx.scene.control.*;
-import javafx.scene.control.Alert.*;	//for alert
 import javafx.scene.layout.*;
 import javafx.stage.*;
 
 import style.*;		//import the custom style
 import tftp.TFTP;
-
-import javax.swing.text.html.parser.Parser;
 
 public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 	private Scene scene;
@@ -19,7 +16,7 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 
 	//set the elements
 	private Label lbServer = new Label("Server:");
-	private TextField tfServer = new TextField();
+	private TextField tfServer = new TextField("localhost");
 	private Button btnConnect = new Button("Connect");
 
 	private Label lbDirectory = new Label("Directory:");
@@ -73,6 +70,12 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 		btnConnect.setOnAction(this);
 		btnDownload.setOnAction(this);
 		btnUpload.setOnAction(this);
+		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+			@Override
+			public void handle(WindowEvent windowEvent) {
+				System.exit(0);
+			}
+		});//close request
 
 		stage.setScene(scene);
 		stage.show();
@@ -84,16 +87,19 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 
 		// Switch on its name
 		switch(btn.getText()) {
-			case "Download":
-				break;
-			case "Upload":
+			case "Connect":
+				TFTP tftpConnect = new ClientThread(this);
+				tftpConnect.start();
+				System.out.println("click coonnects");
 				break;
 			case "Change Dir":
 				break;
-			case "Connect":
-				TFTP tftp = new ClientConnect(this);
-				tftp.start();
+			case "Upload":
+				TFTP tftpUpload = new ClientUpload(this);
+				tftpUpload.start();
 				System.out.println("click coonnects");
+				break;
+			case "Download":
 				break;
 		}
 	}//handle

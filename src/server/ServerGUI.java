@@ -49,6 +49,12 @@ public class ServerGUI extends Application implements EventHandler<ActionEvent>{
         //set button action
         btnStart.setOnAction(this);
         btnChangeDir.setOnAction(this);
+		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+			@Override
+			public void handle(WindowEvent windowEvent) {
+				System.exit(0);
+			}
+		});//close request
 
         stage.setScene(scene);
         stage.show();
@@ -66,6 +72,7 @@ public class ServerGUI extends Application implements EventHandler<ActionEvent>{
                 sb.start();
                 break;
             case "Stop":
+                sb.stopServer();
                 btnStart.setText("Start");
                 break;
         }

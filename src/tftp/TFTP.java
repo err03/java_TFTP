@@ -21,35 +21,22 @@ public class TFTP extends Thread implements TFTFConstants{
 	public void WRQPacket(){
 
 	}//WRQ
-	public void DATAPacket(){
-		byte[] b = new byte[516];		//the max data is 516, for output
-		System.out.println("data");
-		int blockNum = 1;	//1
+	public void DATAPacket(InetAddress address,int blockNum,byte[] data,int port){
+		System.out.println("DATAPacket");
+		byte[] b = new byte[516];		//the max data is 516
 		int opcode = DATA;	//3
 
 		try {
-			address = InetAddress.getByName("localhost");
-			ds = new DatagramSocket();
+			ds = new DatagramSocket();	//no port, use for send packet
 			ByteArrayOutputStream ab = new ByteArrayOutputStream(b.length);
-			DataOutputStream dos = new DataOutputStream(ab);
-			dos.writeShort(opcode);		//write the data code : 3
+			DataOutputStream dos = new DataOutputStream(ab);	//use DataOutputSteam to write data
+			dos.writeShort(opcode);		//write the code : 3
 			dos.writeShort(blockNum);	//write the block num
-
-			f = new File("Lincoln.txt");		//use file here,
-			System.out.println(f.getCanonicalFile());
-			fis = new FileInputStream(f);
-			int ba = 0;
-			String value = "";
-			while((ba=fis.read()) > 0){
-				value += (char)ba;
-			}
-//			System.out.println(value);
-
-			dos.writeBytes(value);	//write the data
-			dos.writeByte(0);
-			dos.close();
-
-			dp = new DatagramPacket(ab.toByteArray(),ab.toByteArray().length,address,PORT);
+			dos.write(data);	//write the data[512]
+			dos.close();		//close to flush the data
+			System.out.println("tftp prot:"+port);
+														//516 //address and port send to client or server
+			dp = new DatagramPacket(ab.toByteArray(),ab.toByteArray().length,address,port);
 			ds.send(dp);
 		} catch (UnknownHostException | SocketException e) {
 			e.printStackTrace();
