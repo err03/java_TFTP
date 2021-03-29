@@ -1,7 +1,8 @@
 package tftp;
 
 public interface TFTFConstants {
-	public static final int PORT = 69;	//for tftp use
+	public static final int SERVER_PORT = 69;	//for server tftp use
+	public static final int CLIENT_PORT = 3560;	//for client tftp use
 
 	public static final int RRQ = 1;	//client read from server(download)
 	public static final int WRQ = 2;	//client write to server (upload))
