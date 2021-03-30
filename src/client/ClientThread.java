@@ -24,11 +24,16 @@ public class ClientThread extends TFTP {
 			/*
 			send data to server
 			 */
+			ds = new DatagramSocket();
 			address = InetAddress.getByName(gui.getTfServer().getText());	//get the localhost
+			/*
+			testing, send data to client
+			 */
 			byte[] a = "hello".getBytes();
-			DATAPacket(address,1,a,SERVER_PORT);
+			dp = DATAPacket(address,1,a,SERVER_PORT);
+			ds.send(dp);
 
-			ReadFromServer();	//ready to read from server
+//			ReadFromServer();	//ready to read from server
 		} catch (IOException e) {
 			e.printStackTrace();
 		}//try..catch
@@ -37,21 +42,29 @@ public class ClientThread extends TFTP {
 	/*
 	ready to read from server
 	 */
-	private void ReadFromServer() throws IOException {
-		byte[] data = new byte[1024];
-		dp = new DatagramPacket(data,data.length);	//ready the packet
-		ds = new DatagramSocket(CLIENT_PORT);				//packet ready the receive the port
-		ds.receive(dp);					//will stop here until read the data
-		ByteArrayInputStream ab = new ByteArrayInputStream(data);	// data ↑
-		DataInputStream dis = new DataInputStream(ab);
-		String content = "";
-		byte b;
-		while ((b = dis.readByte()) > 0) {
-			content += (char) b;
-			System.out.println(b);
-		}
-		log(content);
-	}//read from server
+//	private void ReadFromServer() throws IOException {
+//		int opcode = 0,blockNum=0;
+//		byte b;				//use for dis.readByte
+//		String content = "";		//save the data from server
+//		byte[] data = new byte[1024];
+//
+//		dp = new DatagramPacket(data,data.length);	//ready the packet
+//		ds = new DatagramSocket(CLIENT_PORT);				//packet ready the receive the port
+//		ds.receive(dp);					//will stop here until read the data
+//		ByteArrayInputStream ab = new ByteArrayInputStream(data);	// data ↑
+//		DataInputStream dis = new DataInputStream(ab);
+//
+//		opcode = dis.readShort();        //get the opcode 1,2,3,4,5
+//		blockNum = dis.readShort();
+//		while ((b = dis.readByte()) > 0) {
+//			content += (char) b;
+//			System.out.println(b);
+//		}
+//
+//		log(opcode + "");
+//		log(blockNum + "");
+//		log(content);
+//	}//read from server
 
 	private void log(String msg){
 		gui.getTaLog().appendText(msg + "\n");
