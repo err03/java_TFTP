@@ -27,6 +27,7 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 	private Button btnDownload = new Button("Download");
 
 	private TextArea taLog = new TextArea();
+	private Button btnClear = new Button("Clear");
 	//set the pane
 	private FlowPane serverPane = new FlowPane(8,8);
 	private FlowPane directoryPane = new FlowPane(8,8);
@@ -55,6 +56,8 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 		serverPane.setAlignment(Pos.CENTER);	//set the position
 		directoryPane.setAlignment(Pos.CENTER_LEFT);
 		buttonPane.setAlignment(Pos.CENTER_RIGHT);
+		btnClear.setAlignment(Pos.CENTER_RIGHT);
+		taLog.setWrapText(true);
 		stage.setX(100);
 		stage.setY(100);
 
@@ -63,13 +66,14 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 		directoryPane.getChildren().addAll(lbDirectory,tfDirectory,btnChangeDir);
 		buttonPane.getChildren().addAll(btnUpload,btnDownload);
 		//add all to root
-		root.getChildren().addAll(serverPane,directoryPane,buttonPane,taLog);
+		root.getChildren().addAll(serverPane,directoryPane,buttonPane,taLog,btnClear);
 
 		//set the button action
 		btnChangeDir.setOnAction(this);
 		btnConnect.setOnAction(this);
 		btnDownload.setOnAction(this);
 		btnUpload.setOnAction(this);
+		btnClear.setOnAction(this);
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override
 			public void handle(WindowEvent windowEvent) {
@@ -100,6 +104,12 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 				System.out.println("click coonnects");
 				break;
 			case "Download":
+				TFTP tftpDownload = new ClientDownload(this);
+				tftpDownload.start();
+				System.out.println("click coonnects");
+				break;
+			case "Clear":
+				taLog.setText("");
 				break;
 		}
 	}//handle
