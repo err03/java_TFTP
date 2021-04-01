@@ -8,6 +8,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;	//for alert
 import javafx.scene.layout.*;
 import javafx.stage.*;
+import style.FontStyle;
+import style.MonoSpacedFont;
 
 public class ServerGUI extends Application implements EventHandler<ActionEvent>{
     private Scene scene;
@@ -20,7 +22,7 @@ public class ServerGUI extends Application implements EventHandler<ActionEvent>{
 
     private Button btnStart = new Button("Start");
     private TextArea taLog = new TextArea();
-
+    private Button btnClear = new Button("Clear");
     //set the pane
     private FlowPane directoryPane = new FlowPane(8,8);
     private VBox root = new VBox(8);
@@ -36,19 +38,26 @@ public class ServerGUI extends Application implements EventHandler<ActionEvent>{
         stage.setTitle("Server GUI");
         scene = new Scene(root, 550, 300);
 
+        //set the  style
+        FontStyle fs = new MonoSpacedFont();	//get the monospace font style
+        tfDirectory.setFont(fs.getFont());
+        taLog.setFont(fs.getFont());
+
         //set element setting
         tfDirectory.setPrefColumnCount(25); //set width
         directoryPane.setAlignment(Pos.CENTER);
         stage.setX(700);
         stage.setY(100);
+        btnClear.setAlignment(Pos.CENTER_RIGHT);
 
         //set the pane add children
         directoryPane.getChildren().addAll(lbDirectory,tfDirectory,btnChangeDir,btnStart);
-        root.getChildren().addAll(directoryPane,taLog);
+        root.getChildren().addAll(directoryPane,taLog,btnClear);
 
         //set button action
         btnStart.setOnAction(this);
         btnChangeDir.setOnAction(this);
+        btnClear.setOnAction(this);
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override
 			public void handle(WindowEvent windowEvent) {
@@ -68,12 +77,17 @@ public class ServerGUI extends Application implements EventHandler<ActionEvent>{
         switch(btn.getText()) {
             case "Start":
                 btnStart.setText("Stop");
+                tfDirectory.setEditable(false);
                 sb = new ServerBegin(this);
                 sb.start();
                 break;
             case "Stop":
                 sb.stopServer();
+                tfDirectory.setEditable(true);
                 btnStart.setText("Start");
+                break;
+            case "Clear":
+                taLog.setText("");
                 break;
         }
     }//handle

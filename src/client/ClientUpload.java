@@ -1,5 +1,6 @@
 package client;
 
+import javafx.application.Platform;
 import tftp.TFTP;
 
 import java.io.*;
@@ -7,6 +8,10 @@ import java.net.*;
 
 public class ClientUpload extends TFTP {
 	private ClientGUI gui;
+	private DatagramPacket dp;
+	private DatagramSocket dsSend;
+	private DatagramSocket dsReceive;
+	private InetAddress address;
 	/**
 	 * {InetAddress address},{FileInputStream fis}
 	 * and {File f} from extends TFTP
@@ -22,11 +27,13 @@ public class ClientUpload extends TFTP {
 		System.out.println("click upload");	//click upload
 		String filename = "filename.txt";	//get file name here
 		try {
-			ds = new DatagramSocket();
-			dp = WRQPacket(filename,SERVER_PORT);
-			ds.send(dp);
+			address = InetAddress.getByName(gui.getTfServer().getText());	//get the localhost
+			dsSend = new DatagramSocket();
+			dsReceive = new DatagramSocket(CLIENT_PORT);	//packet ready the receive the port
+			dp = WRQPacket(filename,address,SERVER_PORT);
+			dsSend.send(dp);
 
-			uploadFileData(filename);
+//			uploadFileData(filename);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}//try catch
@@ -38,7 +45,6 @@ public class ClientUpload extends TFTP {
 		byte[] a = new byte[512];		//total 512 length for read from server
 
 		address = InetAddress.getByName(gui.getTfServer().getText());	//get the localhost
-		ds = new DatagramSocket();	//no port, use for send packet
 		f = new File(filename);		//use file here,
 //			System.out.println(f.getCanonicalFile());
 		fis = new FileInputStream(f);
@@ -46,7 +52,7 @@ public class ClientUpload extends TFTP {
 		while((ba=fis.read(a)) > 0){
 //				System.out.println(ba);		//print out total data how many time that fill the byte[512]
 			dp = DATAPacket(address,blockNum,a,SERVER_PORT);	//send data
-			ds.send(dp);
+			dsSend.send(dp);
 			a = new byte[512];		//need to new for next packet
 			blockNum++;
 			if(receiveACK()){		//if the ACK is true, then it receive the ACK from server
@@ -61,9 +67,8 @@ public class ClientUpload extends TFTP {
 		byte[] data = new byte[4];		//byte length 4
 
 		dp = new DatagramPacket(data,data.length);	//ready the packet
-		ds = new DatagramSocket(CLIENT_PORT);				//packet ready the receive the port
 
-		ds.receive(dp);					//will stop here until read the data
+		dsReceive.receive(dp);					//will stop here until read the data
 
 		ByteArrayInputStream ab = new ByteArrayInputStream(data);	// data ↑
 		DataInputStream dis = new DataInputStream(ab);
@@ -77,6 +82,16 @@ public class ClientUpload extends TFTP {
 	}//receive ACK from server
 
 	private void log(String msg){
-		gui.getTaLog().appendText(msg + "\n");
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				gui.getTaLog().appendText(msg + "\n");
+			}
+		});//pllatform run
 	}//log
+
+	private void DownloadThreadClose(){
+		dsSend.close();
+		dsReceive.close();
+	}//download thread close
 }//class

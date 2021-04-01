@@ -4,30 +4,26 @@ import java.io.*;
 import java.net.*;
 
 public class TFTP extends Thread implements TFTFConstants{
-	public InetAddress address;
-	public DatagramPacket dp;
-	public DatagramSocket ds;
 	public FileInputStream fis;
 	public File f;
-
 	@Override
 	public void run() {
 		System.out.println("run(): TFTP");
 	}//run
 
-	public DatagramPacket RRQPacket(String filename,int port){
+	public DatagramPacket RRQPacket(String filename,String mode,InetAddress address,int port){
 		System.out.println("RRQPacket");
 		int opcode = RRQ;				//1
 		ByteArrayOutputStream ab = null;
 		DataOutputStream dos;
 		try {
-			ab = new ByteArrayOutputStream(opcode+filename.length()+1+"octet".length()+1);
+			ab = new ByteArrayOutputStream(opcode+filename.length()+1+mode.length()+1);
 			dos = new DataOutputStream(ab);	//use DataOutputSteam to write data
 
 			dos.writeShort(opcode);		//write the code : 1
 			dos.writeBytes(filename);	//write filename
 			dos.writeByte(0);	//write 0
-			dos.writeBytes("octet");	//write mode
+			dos.writeBytes(mode);	//write mode
 			dos.writeByte(0);	//write 0
 			dos.close();		//close to flush the data
 
@@ -38,7 +34,7 @@ public class TFTP extends Thread implements TFTFConstants{
 													//depend
 		return new DatagramPacket(ab.toByteArray(),ab.toByteArray().length,address,port);
 	}//RRQ
-	public DatagramPacket WRQPacket(String filename,int port){
+	public DatagramPacket WRQPacket(String filename,InetAddress address,int port){
 		System.out.println("WRQPacket");
 		int opcode = WRQ;				//2
 		ByteArrayOutputStream ab = null;
@@ -104,4 +100,6 @@ public class TFTP extends Thread implements TFTFConstants{
 		return new DatagramPacket(ab.toByteArray(),ab.toByteArray().length,address,port);
 	}//ACK
 	public DatagramPacket ERRORPacket(){return null;}//ERROR
+	//-----------------------------------------------------------------
+
 }//class
