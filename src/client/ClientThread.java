@@ -30,8 +30,8 @@ public class ClientThread extends TFTP {
 			send data to server
 			 */
 			dsSend = new DatagramSocket();		//use for send
-			dsSend.setSoTimeout(2000);
 			dsReceive = new DatagramSocket(CLIENT_PORT);		//packet ready the receive the port
+			dsReceive.setSoTimeout(1000);
 			address = InetAddress.getByName(gui.getTfServer().getText());	//get the localhost
 			/*
 			testing, send data to client
@@ -48,8 +48,10 @@ public class ClientThread extends TFTP {
 			receiveACK();	//ready to read from server
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.out.println("Time Out");
+			ClientThreadClose();
 		}finally {
-			DownloadThreadClose();
+			ClientThreadClose();
 		}
 	}//run
 
@@ -83,7 +85,7 @@ public class ClientThread extends TFTP {
 		});//pllatform run
 	}//log
 
-	private void DownloadThreadClose(){
+	private void ClientThreadClose(){
 		dsSend.close();
 		dsReceive.close();
 	}//download thread close

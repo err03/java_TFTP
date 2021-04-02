@@ -9,4 +9,10 @@ public interface TFTFConstants {
 	public static final int DATA = 3;	//data client transfer to server
 	public static final int ACK = 4;	//to confirm the data, when read/write the data
 	public static final int ERROR = 5;	//error 8 error code
+
+	//error code
+	public static final int UNDEF = 0;
+	public static final int NOTFD = 1;
+	public static final int ACCESS = 2;
+	public static final int ILLOP = 4;
 }

@@ -13,9 +13,8 @@ public class ServerBegin extends TFTP implements TFTFConstants{
 	private DatagramPacket dp;
 	private DatagramSocket dsSend;
 	private DatagramSocket dsReceive;
-	/**
-	 * {DatagramPacket dp} and {DatagramSocket ds} from extends TFTP
-	 */
+	String WRQfilename = "";		//WRQ for write it to local
+
 	public ServerBegin(){} //constructor
 	public ServerBegin(ServerGUI _gui){
 		this.gui = _gui;
@@ -26,10 +25,15 @@ public class ServerBegin extends TFTP implements TFTFConstants{
 		log("------------------ Server Start ------------------");
 		byte[] data = new byte[1024];
 		try {
-
 			dsReceive = new DatagramSocket(SERVER_PORT);		//packet ready the receive the port
 			dsSend = new DatagramSocket();
-			while(true) {	//while true to keep receive the data
+		} catch (SocketException e) {
+			e.printStackTrace();
+		}//try catch
+//			dsReceive.setSoTimeout(1000);
+
+		while(true) {	//while true to keep receive the data
+			try {
 				System.out.println("server is waiting packet...");
 				dp = new DatagramPacket(data,data.length);	//ready the packet
 				dsReceive.receive(dp);		//listen the port, until get the data
@@ -42,52 +46,48 @@ public class ServerBegin extends TFTP implements TFTFConstants{
 				DataInputStream dis = new DataInputStream(ab);
 
 				int opcode = dis.readShort();        //get the opcode 1,2,3,4,5
-
-				switch (opcode){		//RRQ,WRQ,DATA,ACK,ERROR from implements TFTPConstants
-					case RRQ:
-						opcode1(dis);
-						break;
-					case WRQ:
-						opcode2();
-						break;
-					case DATA:
-						opcode3(dis);		//might will add return type
-						break;
-					case ACK:
-						opcode4();
-						break;
-					case ERROR:
-						opcode5();
-						break;
+				if (opcode < 1 || opcode > 5) {
+					sendERROR(5,"Opcode can't < 1 || > 5");
+					continue;
+				}
+				//RRQ,WRQ,DATA,ACK,ERROR from implements TFTPConstants
+				switch (opcode) {
+					case RRQ -> opcode1(dis);
+					case WRQ -> opcode2(dis);
+					case DATA -> opcode3(dis);        //might will add return type
+					case ACK -> opcode4();
+					case ERROR -> opcode5();
 				}//switch
 
-//				WriteToClient(DATA,"Hello");	//test to write to client
-			}//while
-		} catch (SocketException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}//try catch
+				data = new byte[1024];		//new a byte
+			}catch(FileNotFoundException e){
+				e.printStackTrace();
+				sendERROR(1,"File not found");
+			}catch (IOException e){
+				e.printStackTrace();
+				sendERROR(0,"Undefine Error.. Message:"+e.getMessage());
+			}//try catch
+		}//while
 	}//run
 
 	//-------------------------OpCode [1,2,3,4,5] ↓------------------------------------------------------
 	private void opcode1(DataInputStream dis) throws IOException {	//when receive client's RRQ
-		String filename = "";
+		String RRQfilename = "";
 		String mode = "";
 		while(true){
 			byte b = dis.readByte();
 			if(b == 0)
 				break;
-			filename += (char)b;
-		}
+			RRQfilename += (char)b;
+		}//while
 		log("------------ Receive --- Client is <RRQ>("+RRQ+"):");
-		log("-> File:[ " + filename+" ]");
+		log("-> File:[ " + RRQfilename+" ]");
 		while(true){
 			byte b = dis.readByte();
 			if(b == 0)
 				break;
 			mode += (char)b;
-		}
+		}//while
 		log("-> Mode:[ " + mode + " ]");
 
 		/*
@@ -97,24 +97,40 @@ public class ServerBegin extends TFTP implements TFTFConstants{
 		int ba = 0;
 		byte[] a = new byte[512];		//total 512 length for read from server
 
-		f = new File(filename);		//use file here,
+		File f = new File(RRQfilename);        //use file here,
 //		System.out.println(f.getCanonicalFile());
-		fis = new FileInputStream(f);
-		while((ba=fis.read(a)) > 0){
+
+		FileInputStream fis = new FileInputStream(f);
+
+		while((ba= fis.read(a)) > 0){
 //			System.out.println(ba);		//print out total data how many time that fill the byte[512]
 			WriteToClient(blockNum,a);	//** write to client
 			blockNum++;
 			a = new byte[512];		//need to new for next packet
-			if(receiveACK()){
-				continue;
-			}
+			receiveACK();		//until receive the AC, otherwise it will stuck
 		}//while
-//		WriteToClient(1,new byte[0]);	//finish sending data
 		System.out.println("Server finish sending data");
 	}//opcode RRQ:1
 
-	private void opcode2(){
+	private void opcode2(DataInputStream dis) throws IOException {
 		log("------------Receive --- Client is <WRQ>("+WRQ+"):");
+		String filename="";
+		String mode = "";
+		while(true){
+			byte b = dis.readByte();
+			if(b == 0)
+				break;
+			filename += (char)b;
+		}//while
+		WRQfilename = filename;		//renew the filename,
+		log("-> File:[ " + WRQfilename+" ]");
+		while(true){
+			byte b = dis.readByte();
+			if(b == 0)
+				break;
+			mode += (char)b;
+		}//while
+		log("-> Mode:[ " + mode + " ]");
 	}//opcode WRQ:2
 
 	private void opcode3(DataInputStream dis) throws IOException {	//use for receive the data
@@ -124,26 +140,31 @@ public class ServerBegin extends TFTP implements TFTFConstants{
 		 */
 		int numOfBlock = dis.readShort();	//read the num of block#
 
-		String content = "";
+		String fileContent = "";
+		String fileData = "";
 		byte b;
 		while ((b = dis.readByte()) > 0) {
-			content += (char) b;
+			fileData += b + ",";
+			fileContent += (char) b;
 		}
+
 		log("------------ Receive --- Client is <DATA>("+DATA+"):");
 		log("-> Block # :[ " + numOfBlock+" ]");
-		log(content);
-
+		log(fileData);
 		/*
 		after receive the DATA, send ACK
 		 */
-		int blockNum = 1;
-		sendACK(blockNum);
+		sendACK(numOfBlock);		//send ACK
+		if(!WRQfilename.equals("")) {		//will happen error; lat
+			writeFileToLocal(fileContent.getBytes());    //write to file
+		}//if
+//		System.out.println("--- filename:"+WRQfilename);
 	}//opcode DATA:3
 	private void opcode4() throws IOException {	//receive client's ACK, then send data to client
+		/**	only for testing, is it receive correct ACK
+		 * didn't used, when server receive the data, receiveACK() is in while{} at op1
+		 */
 		System.out.println("Server ACK--------");
-//		if(receiveACK()){
-//			System.out.println("receive ACK");
-//		}//if
 	}//opcode ACK:4
 	private void opcode5(){}//opcode ERROR:5
 
@@ -159,8 +180,8 @@ public class ServerBegin extends TFTP implements TFTFConstants{
 		log(holder + "");
 	}//write to client
 
-	private boolean receiveACK() throws IOException {
-		int opcode = 0,blockNum=0;
+	private void receiveACK() throws IOException {
+		int opcode,blockNum;
 
 		byte[] data = new byte[4];
 
@@ -176,7 +197,6 @@ public class ServerBegin extends TFTP implements TFTFConstants{
 
 		log("------------ Receive --- from Server <ACK>("+opcode+"):");
 		log("-> Block # :[ " + blockNum+" ]");
-		return true;
 	}//receive ACK from Client
 
 	private void sendACK(int blockNum) throws IOException {
@@ -185,7 +205,25 @@ public class ServerBegin extends TFTP implements TFTFConstants{
 		log("------------ Send --- to Client <ACK>("+ACK+"):");
 		log("-> Block # :[ " + blockNum+" ]");
 	}//send ACK to client
+
+	private void sendERROR(int Ecode,String errMsg) {
+		try {
+			dp = ERRORPacket(Ecode,errMsg.getBytes(),dp.getAddress(),CLIENT_PORT);
+			dsSend.send(dp);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		log("------------ Send --- to Client <ERROR>("+ERROR+"):");
+		log("-> Message # :[ " + errMsg+" ]");
+	}//send ERROR to client
 	//--------------------------------------------------------------------------------
+	private void writeFileToLocal(byte[] data) throws IOException {
+		FileOutputStream fos = new FileOutputStream("C:\\Users\\error\\Desktop\\server\\" + WRQfilename, true);
+		fos.write(data);
+		fos.close();
+	}//write the file to local
+
 	private void log(String msg){
 		Platform.runLater(new Runnable() {
 			@Override
