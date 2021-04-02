@@ -4,8 +4,7 @@ import java.io.*;
 import java.net.*;
 
 public class TFTP extends Thread implements TFTFConstants{
-	public FileInputStream fis;
-	public File f;
+
 	@Override
 	public void run() {
 		System.out.println("run(): TFTP");
@@ -34,19 +33,19 @@ public class TFTP extends Thread implements TFTFConstants{
 													//depend
 		return new DatagramPacket(ab.toByteArray(),ab.toByteArray().length,address,port);
 	}//RRQ
-	public DatagramPacket WRQPacket(String filename,InetAddress address,int port){
+	public DatagramPacket WRQPacket(String filename,String mode,InetAddress address,int port){
 		System.out.println("WRQPacket");
 		int opcode = WRQ;				//2
 		ByteArrayOutputStream ab = null;
 		DataOutputStream dos;
 		try {
-			ab = new ByteArrayOutputStream(opcode+filename.length()+1+"octet".length()+1);
+			ab = new ByteArrayOutputStream(opcode+filename.length()+1+mode.length()+1);
 			dos = new DataOutputStream(ab);	//use DataOutputSteam to write data
 
 			dos.writeShort(opcode);		//write the code : 2
 			dos.writeBytes(filename);	//write filename
 			dos.writeByte(0);	//write 0
-			dos.writeBytes("octet");	//write mode
+			dos.writeBytes(mode);	//write mode
 			dos.writeByte(0);	//write 0
 			dos.close();		//close to flush the data
 
@@ -99,7 +98,28 @@ public class TFTP extends Thread implements TFTFConstants{
 		//516 //address and port send to client or server
 		return new DatagramPacket(ab.toByteArray(),ab.toByteArray().length,address,port);
 	}//ACK
-	public DatagramPacket ERRORPacket(){return null;}//ERROR
+
+	public DatagramPacket ERRORPacket(int Ecode,byte[] data,InetAddress address,int port){
+		System.out.println("ERROR packet");
+		byte[] b = new byte[126];		//the max data is 126
+		int opcode = ERROR;
+		ByteArrayOutputStream bas = null;
+		DataOutputStream dos;
+		try {
+			bas = new ByteArrayOutputStream(b.length);
+			dos = new DataOutputStream(bas);
+
+			dos.writeShort(opcode);
+			dos.writeShort(Ecode);
+			dos.write(data);
+			dos.write(0);
+			dos.close();
+
+		}catch (IOException e){
+			e.printStackTrace();
+		}
+		return new DatagramPacket(bas.toByteArray(), bas.toByteArray().length,address,port);
+	}//ERROR
 	//-----------------------------------------------------------------
 
 }//class

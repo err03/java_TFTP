@@ -57,7 +57,6 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 		directoryPane.setAlignment(Pos.CENTER_LEFT);
 		buttonPane.setAlignment(Pos.CENTER_RIGHT);
 		btnClear.setAlignment(Pos.CENTER_RIGHT);
-		taLog.setWrapText(true);
 		stage.setX(100);
 		stage.setY(100);
 

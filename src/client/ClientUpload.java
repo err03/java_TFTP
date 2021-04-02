@@ -12,10 +12,9 @@ public class ClientUpload extends TFTP {
 	private DatagramSocket dsSend;
 	private DatagramSocket dsReceive;
 	private InetAddress address;
-	/**
-	 * {InetAddress address},{FileInputStream fis}
-	 * and {File f} from extends TFTP
-	 */
+	private FileInputStream fis;
+	private File f;
+	String filename = "";	//get file name here
 
 	public ClientUpload(){}//constructor
 	public ClientUpload(ClientGUI _gui){
@@ -25,22 +24,27 @@ public class ClientUpload extends TFTP {
 	@Override
 	public void run() {
 		System.out.println("click upload");	//click upload
-		String filename = "filename.txt";	//get file name here
+		filename = "Lincoln.txt";	//get file name here
+		String mode = "octet";
 		try {
 			address = InetAddress.getByName(gui.getTfServer().getText());	//get the localhost
 			dsSend = new DatagramSocket();
 			dsReceive = new DatagramSocket(CLIENT_PORT);	//packet ready the receive the port
-			dp = WRQPacket(filename,address,SERVER_PORT);
+			dp = WRQPacket(filename,mode,address,SERVER_PORT);
 			dsSend.send(dp);
+			log("------------ Sending --- to Server <WRQ>("+WRQ+"):");
+			log("-> File:[ " + filename+" ]");
+			log("-> Mode:[ " + mode + " ]");
 
-//			uploadFileData(filename);
+			uploadFileData(filename);
+			UploadThreadClose();		//when finish, close the port
 		} catch (IOException e) {
 			e.printStackTrace();
 		}//try catch
 	}//run
 
 	private void uploadFileData(String filename) throws IOException {
-		int blockNum = 0;	//block number
+		int blockNum = 1;	//block number
 		int ba = 0;
 		byte[] a = new byte[512];		//total 512 length for read from server
 
@@ -53,15 +57,18 @@ public class ClientUpload extends TFTP {
 //				System.out.println(ba);		//print out total data how many time that fill the byte[512]
 			dp = DATAPacket(address,blockNum,a,SERVER_PORT);	//send data
 			dsSend.send(dp);
+
+			log("------------ Sending --- to Server <DATA>("+DATA+"):");
+			log("-> Block # :[ " + blockNum+" ]");
+			log(a + "");
+
 			a = new byte[512];		//need to new for next packet
 			blockNum++;
-			if(receiveACK()){		//if the ACK is true, then it receive the ACK from server
-				continue;
-			}//if
+			receiveACK();		//if the ACK is true, then it receive the ACK from server
 		}//while
 	}//upload file to server
 
-	private boolean receiveACK() throws IOException {
+	private void receiveACK() throws IOException {
 		int opcode = 0,blockNum=0;
 
 		byte[] data = new byte[4];		//byte length 4
@@ -74,13 +81,28 @@ public class ClientUpload extends TFTP {
 		DataInputStream dis = new DataInputStream(ab);
 
 		opcode = dis.readShort();        //get the opcode 1,2,3,4,5
+		if (opcode < 1 || opcode > 5) {
+			sendERROR(5,"Opcode can't < 1 || > 5");
+			return;
+		}
 		blockNum = dis.readShort();
 
-		log(opcode + "");
-		log(blockNum + "");
-		return true;
+		log("------------ Receive --- from Server <ACK>("+opcode+"):");
+		log("-> Block # :[ " + blockNum+" ]");
 	}//receive ACK from server
 
+	private void sendERROR(int Ecode,String errMsg) {
+		try {
+			dp = ERRORPacket(Ecode,errMsg.getBytes(),dp.getAddress(),CLIENT_PORT);
+			dsSend.send(dp);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		log("------------ Send --- to Client <ERROR>("+ERROR+"):");
+		log("-> Message # :[ " + errMsg+" ]");
+	}//send ERROR to client
+//-------------------------------------------------------------------------------
 	private void log(String msg){
 		Platform.runLater(new Runnable() {
 			@Override
@@ -90,7 +112,7 @@ public class ClientUpload extends TFTP {
 		});//pllatform run
 	}//log
 
-	private void DownloadThreadClose(){
+	private void UploadThreadClose(){
 		dsSend.close();
 		dsReceive.close();
 	}//download thread close
