@@ -1,4 +1,5 @@
 package client;
+
 import javafx.application.Application;
 import javafx.event.*;
 import javafx.geometry.Pos;
@@ -7,10 +8,13 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
 
-import style.*;		//import the custom style
+import style.*;        //import the custom style
 import tftp.TFTP;
 
-public class ClientGUI extends Application implements EventHandler<ActionEvent>{
+import java.io.File;
+import java.util.Optional;
+
+public class ClientGUI extends Application implements EventHandler<ActionEvent> {
 	private Scene scene;
 	private Stage stage;
 
@@ -29,13 +33,17 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 	private TextArea taLog = new TextArea();
 	private Button btnClear = new Button("Clear");
 	//set the pane
-	private FlowPane serverPane = new FlowPane(8,8);
-	private FlowPane directoryPane = new FlowPane(8,8);
-	private FlowPane buttonPane = new FlowPane(8,8);
+	private FlowPane serverPane = new FlowPane(8, 8);
+	private FlowPane directoryPane = new FlowPane(8, 8);
+	private FlowPane buttonPane = new FlowPane(8, 8);
 	private VBox root = new VBox(8);
 
+	private FontStyle fs;
+
 	/*main*/
-	public static void main(String[] args) {launch(args);}//main
+	public static void main(String[] args) {
+		launch(args);
+	}//main
 
 	// Called automatically after launch sets up javaFX
 	public void start(Stage _stage) throws Exception {
@@ -44,28 +52,30 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 		scene = new Scene(root, 550, 300);
 
 		//set the  style
-		FontStyle fs = new MonoSpacedFont();	//get the monospace font style
+		fs = new MonoSpacedFont();    //get the monospace font style
 		tfServer.setFont(fs.getFont());
 		tfDirectory.setFont(fs.getFont());
 		taLog.setFont(fs.getFont());
 
 		//set the element setting
-		tfServer.setPrefColumnCount(18);	//set the width
+		tfServer.setPrefColumnCount(18);    //set the width
 		tfDirectory.setPrefColumnCount(40);
-		tfDirectory.setDisable(true);		//set disable
-		serverPane.setAlignment(Pos.CENTER);	//set the position
+		tfDirectory.setDisable(true);        //set disable
+		serverPane.setAlignment(Pos.CENTER);    //set the position
 		directoryPane.setAlignment(Pos.CENTER_LEFT);
 		buttonPane.setAlignment(Pos.CENTER_RIGHT);
 		btnClear.setAlignment(Pos.CENTER_RIGHT);
 		stage.setX(100);
 		stage.setY(100);
+		taLog.autosize();
+		taLog.setPrefHeight(500);
 
 		//pane add children
-		serverPane.getChildren().addAll(lbServer,tfServer,btnConnect);
-		directoryPane.getChildren().addAll(lbDirectory,tfDirectory,btnChangeDir);
-		buttonPane.getChildren().addAll(btnUpload,btnDownload);
+		serverPane.getChildren().addAll(lbServer, tfServer, btnConnect);
+		directoryPane.getChildren().addAll(lbDirectory, tfDirectory, btnChangeDir);
+		buttonPane.getChildren().addAll(btnUpload, btnDownload);
 		//add all to root
-		root.getChildren().addAll(serverPane,directoryPane,buttonPane,taLog,btnClear);
+		root.getChildren().addAll(serverPane, directoryPane, buttonPane, taLog, btnClear);
 
 		//set the button action
 		btnChangeDir.setOnAction(this);
@@ -86,26 +96,31 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 
 	public void handle(ActionEvent evt) {
 		// Get the button that was clicked
-		Button btn = (Button)evt.getSource();
+		Button btn = (Button) evt.getSource();
 
 		// Switch on its name
-		switch(btn.getText()) {
+		switch (btn.getText()) {
 			case "Connect":
 				TFTP tftpConnect = new ClientThread(this);
 				tftpConnect.start();
 				System.out.println("click coonnects");
 				break;
 			case "Change Dir":
+				changeDir();
 				break;
 			case "Upload":
-				TFTP tftpUpload = new ClientUpload(this);
+				String filenameUpload = dialogTypeFilename();	//get the file name
+				if(filenameUpload.equals("")){return;}
+				TFTP tftpUpload = new ClientUpload(this,filenameUpload);
 				tftpUpload.start();
-				System.out.println("click coonnects");
+				System.out.println("click upload");
 				break;
 			case "Download":
-				TFTP tftpDownload = new ClientDownload(this);
+				String filenameDownload = dialogTypeFilename();	//get the file name
+				if(filenameDownload.equals("")){return;}
+				TFTP tftpDownload = new ClientDownload(this,filenameDownload);
 				tftpDownload.start();
-				System.out.println("click coonnects");
+				System.out.println("click doownload");
 				break;
 			case "Clear":
 				taLog.setText("");
@@ -113,16 +128,32 @@ public class ClientGUI extends Application implements EventHandler<ActionEvent>{
 		}
 	}//handle
 
+	private void changeDir(){
+		DirectoryChooser dc = new DirectoryChooser();
+		File directory = dc.showDialog(null);
+		tfDirectory.setText(directory.toString());
+//		System.out.println(directory);
+	}//change dir
+
+	private String dialogTypeFilename(){
+		TextInputDialog ti = new TextInputDialog("");
+		Optional<String> input = ti.showAndWait();
+		if(input.isEmpty()){
+			return "";
+		}
+		return input.get();
+	}//getUploadFile, use textInputDialog
+
 	//set the setter
-	public TextField getTfServer(){
+	public TextField getTfServer() {
 		return this.tfServer;
 	}//get tf server
 
-	public TextField getTfDirectory(){
+	public TextField getTfDirectory() {
 		return this.tfDirectory;
 	}//get tf directory
 
-	public TextArea getTaLog(){
+	public TextArea getTaLog() {
 		return this.taLog;
 	}//get ta log
 

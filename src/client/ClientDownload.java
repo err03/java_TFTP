@@ -2,6 +2,7 @@ package client;
 
 import javafx.application.Platform;
 import tftp.TFTP;
+
 import java.io.*;
 import java.net.*;
 
@@ -14,38 +15,43 @@ public class ClientDownload extends TFTP {
 	private boolean keepReceived = true;
 	private FileOutputStream fos;
 	String filename = "";
+	String filepath = "";
 
-	public ClientDownload(){}//constructor
-	public ClientDownload(ClientGUI _gui){
+	public ClientDownload() {
+	}//constructor
+
+	public ClientDownload(ClientGUI _gui,String _filename) {
 		this.gui = _gui;
+		this.filename = _filename;
 	}//constructor
 
 	@Override
 	public void run() {
-		filename = "Lincoln512.txt";
+//		filename = "Lincoln512.txt";
+		filepath = gui.getTfDirectory().getText() + "\\";
 		String mode = "octet";
-		int blockNum = 0;	//to send ACK
+		int blockNum = 0;    //to send ACK
 		try {
 			/*
 			send RRQ to server
 			 */
-			address = InetAddress.getByName(gui.getTfServer().getText());	//get the localhost
-			dsSend = new DatagramSocket();	//use for send
-			dsReceive = new DatagramSocket(CLIENT_PORT);				//packet ready the receive the port
-			dsReceive.setSoTimeout(1000);	//set the timeout
+			address = InetAddress.getByName(gui.getTfServer().getText());    //get the localhost
+			dsSend = new DatagramSocket();    //use for send
+			dsReceive = new DatagramSocket(CLIENT_PORT);                //packet ready the receive the port
+			dsReceive.setSoTimeout(1000);    //set the timeout
 
-			dp = RRQPacket(filename,mode,address,SERVER_PORT);
+			dp = RRQPacket(filename, mode, address, SERVER_PORT);
 			dsSend.send(dp);
 
-			log("------------ Sending --- to Server <RRQ>("+RRQ+"):");
-			log("-> File:[ " + filename+" ]");
+			log("------------ Sending --- to Server <RRQ>(" + RRQ + "):");
+			log("-> File:[ " + filename + " ]");
 			log("-> Mode:[ " + mode + " ]");
 			/*
 				receive data from server
 			 */
-			while(true) {
+			while (true) {
 				blockNum++;
-				ReadDataFromServer();	//while true, to keep read data from server
+				ReadDataFromServer();    //while true, to keep read data from server
 
 				//when receive the data, send ACK to server
 				dp = ACKPacket(address, blockNum, SERVER_PORT);
@@ -61,27 +67,27 @@ public class ClientDownload extends TFTP {
 	}//run
 
 	private void ReadDataFromServer() throws IOException {
-		int opcode = 0,blockNum=0;
-		byte b;				//use for dis.readByte
+		int opcode = 0, blockNum = 0;
+		byte b;                //use for dis.readByte
 
-		String fileContent = "";		//save the data from server
-		String fileData = "";		//receive the file Data
+		String fileContent = "";        //save the data from server
+		String fileData = "";        //receive the file Data
 		byte[] data = new byte[1024];
 
-		dp = new DatagramPacket(data,data.length);	//ready the packet
+		dp = new DatagramPacket(data, data.length);    //ready the packet
 		System.out.println("Client is Receving...");
-		dsReceive.receive(dp);					//will stop here until read the data
+		dsReceive.receive(dp);                    //will stop here until read the data
 		System.out.println("Client received packet");
-		ByteArrayInputStream ab = new ByteArrayInputStream(data);	// data ↑
+		ByteArrayInputStream ab = new ByteArrayInputStream(data);    // data ↑
 		DataInputStream dis = new DataInputStream(ab);
 
 		opcode = dis.readShort();        //get the opcode 1,2,3,4,5
 		if (opcode < 1 || opcode > 5) {
-			sendERROR(5,"Opcode can't < 1 || > 5");
+			sendERROR(5, "Opcode can't < 1 || > 5");
 			return;
-		} else if(opcode == 5){
-			receiveERROR(opcode,dis);
-			throw new IOException();	//throw the exception to end the program
+		} else if (opcode == 5) {
+			receiveERROR(opcode, dis);
+			throw new IOException();    //throw the exception to end the program
 		}//if else if
 
 		blockNum = dis.readShort();
@@ -90,33 +96,33 @@ public class ClientDownload extends TFTP {
 			fileContent += (char) b;
 //			System.out.println(b);
 		}//while
-		log("------------ Receive --- from Server <DATA>("+opcode+"):");
-		log("-> OpCode # :[ " + opcode+" ]");
-		log("-> Block # :[ " + blockNum+" ]");
+		log("------------ Receive --- from Server <DATA>(" + opcode + "):");
+		log("-> OpCode # :[ " + opcode + " ]");
+		log("-> Block # :[ " + blockNum + " ]");
 		log(fileData);
-		writeFileToLocal(fileContent.getBytes());		//write file to local
+		writeFileToLocal(fileContent.getBytes());        //write file to local
 //		System.out.println(fileContent);
 //		System.out.println(fileData);
 	}//read from server
 
-	private void receiveERROR(int opcode,DataInputStream dis) throws IOException {
-		log("------------ Receive --- from Server <ERROR>("+opcode+"):");
+	private void receiveERROR(int opcode, DataInputStream dis) throws IOException {
+		log("------------ Receive --- from Server <ERROR>(" + opcode + "):");
 		int Ecode = dis.readShort();
-		switch (Ecode){
+		switch (Ecode) {
 			case UNDEF:
-				log("-> Ecode # :[ " + UNDEF+" ]");
+				log("-> Ecode # :[ " + UNDEF + " ]");
 				log("-> Ecode Message :[ Undefined error ]");
 				break;
 			case NOTFD:
-				log("-> Ecode # :[ " + NOTFD+" ]");
+				log("-> Ecode # :[ " + NOTFD + " ]");
 				log("-> Ecode Message :[ File not found ]");
 				break;
 			case ACCESS:
-				log("-> Ecode # :[ " + ACCESS+" ]");
+				log("-> Ecode # :[ " + ACCESS + " ]");
 				log("-> Ecode Message :[ Access Violation (Can't open the file) ]");
 				break;
 			case ILLOP:
-				log("-> Ecode # :[ " + ILLOP+" ]");
+				log("-> Ecode # :[ " + ILLOP + " ]");
 				log("-> Ecode Message :[ Illegal Opcode ]");
 				break;
 		}//switch
@@ -124,25 +130,26 @@ public class ClientDownload extends TFTP {
 
 	private void writeFileToLocal(byte[] data) throws IOException {
 		//C:\Users\error\Desktop\client
-		fos = new FileOutputStream(new File("C:\\Users\\error\\Desktop\\client\\"+filename),true);
+//		gui.getTfDirectory();
+		fos = new FileOutputStream(new File(filepath + filename), true);
 		fos.write(data);
 		fos.close();
 	}//write the file to local
 
-	private void sendERROR(int Ecode,String errMsg) {
+	private void sendERROR(int Ecode, String errMsg) {
 		try {
-			dp = ERRORPacket(Ecode,errMsg.getBytes(),dp.getAddress(),CLIENT_PORT);
+			dp = ERRORPacket(Ecode, errMsg.getBytes(), dp.getAddress(), CLIENT_PORT);
 			dsSend.send(dp);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		log("------------ Send --- to Client <ERROR>("+ERROR+"):");
-		log("-> Message # :[ " + errMsg+" ]");
+		log("------------ Send --- to Client <ERROR>(" + ERROR + "):");
+		log("-> Message # :[ " + errMsg + " ]");
 	}//send ERROR to client
 
 	//--------------------------------------------------------------------------------------
-	private void log(String msg){
+	private void log(String msg) {
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
@@ -151,7 +158,7 @@ public class ClientDownload extends TFTP {
 		});//pllatform run
 	}//log
 
-	private void DownloadThreadClose(){
+	private void DownloadThreadClose() {
 		dsSend.close();
 		dsReceive.close();
 	}//download thread close
