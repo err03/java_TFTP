@@ -13,12 +13,15 @@ public class ClientThread extends TFTP {
 	private DatagramSocket dsSend;
 	private DatagramSocket dsReceive;
 	private InetAddress address;
+
 	/**
 	 * {InetAddress address},{DatagramPacket dp}
 	 * and {DatagramSocket ds} from extends TFTP
 	 */
-	public ClientThread(){}//constructor
-	public ClientThread(ClientGUI _gui){
+	public ClientThread() {
+	}//constructor
+
+	public ClientThread(ClientGUI _gui) {
 		this.gui = _gui;
 	}//constructor
 
@@ -29,28 +32,28 @@ public class ClientThread extends TFTP {
 			/*
 			send data to server
 			 */
-			dsSend = new DatagramSocket();		//use for send
-			dsReceive = new DatagramSocket(CLIENT_PORT);		//packet ready the receive the port
+			dsSend = new DatagramSocket();        //use for send
+			dsReceive = new DatagramSocket(CLIENT_PORT);        //packet ready the receive the port
 			dsReceive.setSoTimeout(1000);
-			address = InetAddress.getByName(gui.getTfServer().getText());	//get the localhost
+			address = InetAddress.getByName(gui.getTfServer().getText());    //get the localhost
 			/*
 			testing, send data to client
 			 */
 			int blockNum = 1;
 			String msg = "Testing Msg: hello";
 			byte[] a = msg.getBytes();
-			dp = DATAPacket(address,blockNum,a,SERVER_PORT);
+			dp = DATAPacket(address, blockNum, a, SERVER_PORT);
 			dsSend.send(dp);
-			log("------------ Sending --- to Server <DATA>("+DATA+"):");
-			log("-> Block # :[ " +blockNum+" ]");
+			log("------------ Sending --- to Server <DATA>(" + DATA + "):");
+			log("-> Block # :[ " + blockNum + " ]");
 			log(msg);
 
-			receiveACK();	//ready to read from server
+			receiveACK();    //ready to read from server
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Time Out");
 			ClientThreadClose();
-		}finally {
+		} finally {
 			ClientThreadClose();
 		}
 	}//run
@@ -58,25 +61,23 @@ public class ClientThread extends TFTP {
 	/*
 	receive the ACK from server
 	 */
-	private boolean receiveACK() throws IOException {
-		int opcode = 0,blockNum=0;
+	private void receiveACK() throws IOException {
+		int opcode = 0, blockNum = 0;
 
 		byte[] data = new byte[4];
 
-		dp = new DatagramPacket(data,data.length);	//ready the packet
-		dsReceive.receive(dp);					//will stop here until read the data
-		ByteArrayInputStream ab = new ByteArrayInputStream(data);	// data ↑
+		dp = new DatagramPacket(data, data.length);    //ready the packet
+		dsReceive.receive(dp);                    //will stop here until read the data
+		ByteArrayInputStream ab = new ByteArrayInputStream(data);    // data ↑
 		DataInputStream dis = new DataInputStream(ab);
 		opcode = dis.readShort();        //get the opcode 1,2,3,4,5
 		blockNum = dis.readShort();
 
-		log("------------ Receive --- from Server <ACK>("+opcode+"):");
-		log("-> Block # :[ " + blockNum+" ]");
-
-		return true;
+		log("------------ Receive --- from Server <ACK>(" + opcode + "):");
+		log("-> Block # :[ " + blockNum + " ]");
 	}//receive ACK from server
 
-	private void log(String msg){
+	private void log(String msg) {
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
@@ -85,7 +86,7 @@ public class ClientThread extends TFTP {
 		});//pllatform run
 	}//log
 
-	private void ClientThreadClose(){
+	private void ClientThreadClose() {
 		dsSend.close();
 		dsReceive.close();
 	}//download thread close
